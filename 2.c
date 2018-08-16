@@ -57,11 +57,13 @@ Data Stack size         : 512
 #define A_Z_H 0x3F
 #define A_Z_L 0x40
 
-
 #define GRYRO_SCALE 131
+#define ACCEL_SCALE 100
+
 #define TIME 0.00012799
 #define PRE 131
 #define OFFSET 120
+#define M_PI 3.1415
 
 
 unsigned int  mpu6050_get_accel_z();
@@ -104,6 +106,7 @@ void mpu6050_init()
     WriteModule(MPU_ADDRESS,26,0);
     WriteModule(MPU_ADDRESS,27,0);
     WriteModule(MPU_ADDRESS,28,0);
+
 
 }
 unsigned int mpu6050_get_gyro_x()
@@ -166,7 +169,10 @@ void my_put_float(float number,int div)
 }
 void ena_int();
 void dis_int();
-void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z,);
+void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z);
+void accel_cal_2();
+
+void accel_cal();
 void exception(unsigned char *string,float number,int div);
 void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z);
 
@@ -182,6 +188,19 @@ int a_z;
 float degree_x=0;
 float degree_y=0;
 float degree_z=0;
+
+float deg_accel_x=0;
+float deg_accel_y=0;
+float deg_accel_z=0;
+
+float deg_accel_x_2=0;
+float deg_accel_y_2=0;
+float deg_accel_z_2=0;
+
+float degree_fuse_x=0;
+float degree_fuse_y=0;
+float degree_fuse_z=0;
+
 int counter=0;
 interrupt [TIM0_OVF] void timer0_ovf_isr(void)
 {
@@ -260,30 +279,119 @@ mpu6050_init();
 
 mpu_calibrate(&OFF_X,&OFF_Y,&OFF_Z);
 #asm("sei")
-
 while (1)
       {
 
         if(counter_temp>5)
         {
-           // my_put_int(degree_x);
-           // my_putstr("\t");
-           // my_put_int(degree_y);
-           // my_putstr("\t");
+            my_put_int(degree_x);
+            my_putstr("\t");
+            my_put_int(degree_y);
+            my_putstr("\t");
             my_put_int(degree_z);
             my_putstr("\t");
+//
+            my_put_int(deg_accel_x_2);
+            my_putstr("\t");
+            my_put_int(deg_accel_y_2);
+            my_putstr("\t");
+            my_put_int(deg_accel_z_2);
+            my_putstr("\t");
+
             my_putstr("\n");
+
             counter_temp=0;
         }
         else
             counter_temp++;
 
-
+         accel_cal_2()    ;
         gyro_cal(OFF_X,OFF_Y,OFF_Z);
 
 
     }
 }
+//void accel_cal()
+//{
+//    float accel;
+//    a_x=mpu6050_get_accel_x()*0.7+.3*a_x;
+//    a_y=mpu6050_get_accel_y()*0.7+.3*a_y;
+//    a_z=mpu6050_get_accel_z()*0.7+.3*a_z;
+//
+//
+//
+////    a_x=a_x/100;//just devide in order to reduce extra bit
+////    a_y=a_y/100;
+////    a_z=a_z/100;
+////
+////    exception("a_x",a_x,7);
+////    exception("a_y",a_y,7);
+////    exception("a_z",a_z,7);
+//
+//    accel=a_x*a_x+a_y*a_y+a_z*a_z;
+//    accel=sqrt(accel);
+//
+//    deg_accel_x= acos ( a_x/accel )*180/M_PI;
+//    deg_accel_y= acos (a_y/accel )*180/M_PI;
+//    deg_accel_z= acos (a_z/accel )*180/M_PI;
+//    //exception("a_x/accel",t,10);   //acos (  )*180/M_PI
+//
+//
+//}
+void accel_cal_2()
+{
+    a_x=mpu6050_get_accel_x();
+    a_y=mpu6050_get_accel_y();
+    a_z=mpu6050_get_accel_z();
+
+     a_x/=100;
+     a_y/=100;
+     a_z/=100;
+
+
+
+//
+//    exception("a_x",a_x,7);
+//    exception("a_y",a_y,7);
+//    exception("a_z",a_z,7);
+
+
+    deg_accel_z_2= acos ((float)a_x/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI; //xy plane
+    deg_accel_x_2= acos ((float)a_y/sqrt((float)(a_x*a_x+a_y*a_y+a_z*a_z)))*180/M_PI;//yz plane
+    deg_accel_y_2= acos ((float)a_z/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI;//zx plane
+    //exception("a_x/accel",t,10);   //acos (  )*180/M_PI
+
+//    deg_accel_x_2=(deg_accel_x_2<0)?(360+deg_accel_x_2):deg_accel_x_2;
+//    deg_accel_y_2=(deg_accel_y_2<0)?(360+deg_accel_y_2):deg_accel_y_2;
+//    deg_accel_z_2=(deg_accel_z_2<0)?(360+deg_accel_z_2):deg_accel_z_2;
+
+//    degree_fuse_x=.98*(degree_fuse_x+degree_x)+.02*(a_x);
+//    degree_fuse_y=.98*(degree_fuse_y+degree_y)+.02*(a_y);
+//    degree_fuse_z=.98*(degree_fuse_z+degree_z)+.02*(a_z);
+//
+//
+//    while((degree_fuse_x>360)||(degree_y>360)||(degree_z>360))
+//    {
+//        if(degree_fuse_x>360)
+//            degree_fuse_x=degree_fuse_x-360;
+//        if(degree_y>360)
+//            degree_y=degree_y-360;
+//        if(degree_z>360)
+//            degree_z=degree_z-360;
+//        //exception("upper",6,0);
+//    }
+//    while((degree_fuse_x<0)||(degree_z<0)||(degree_y<0))
+//    {
+//        if(degree_fuse_x<0)
+//            degree_fuse_x=360+degree_fuse_x;
+//        if(degree_y<0)
+//            degree_y=360+degree_y;
+//        if(degree_z<0)
+//            degree_z=360+degree_z;
+//        //exception("leve",5,0);
+//    }
+}
+
 void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z,)
 {
 
@@ -307,8 +415,8 @@ void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z,)
 
         dis_int();
 
-        //degree_x+=(float)g_x*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=;
-        //degree_y+=(float)g_y*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=TIME/GRYRO_SCALE;
+        degree_x+=(float)g_x*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=;
+        degree_y+=(float)g_y*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=TIME/GRYRO_SCALE;
         degree_z+=(float)g_z*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=TIME/GRYRO_SCALE;
 
         //exception("gx_*",(float)g_x*(float)(counter*256+(TCNT0))*(float)TIME,5);
