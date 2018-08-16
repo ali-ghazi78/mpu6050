@@ -344,9 +344,9 @@ void accel_cal_2()
     a_y=mpu6050_get_accel_y();
     a_z=mpu6050_get_accel_z();
 
-     a_x/=100;
-     a_y/=100;
-     a_z/=100;
+     a_x/=1000;
+     a_y/=1000;
+     a_z/=1000;
 
 
 
@@ -356,9 +356,16 @@ void accel_cal_2()
 //    exception("a_z",a_z,7);
 
 
-    deg_accel_z_2= acos ((float)a_x/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI; //xy plane
-    deg_accel_x_2= acos ((float)a_y/sqrt((float)(a_x*a_x+a_y*a_y+a_z*a_z)))*180/M_PI;//yz plane
-    deg_accel_y_2= acos ((float)a_z/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI;//zx plane
+//    deg_accel_z_2= acos ((float)a_x/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI; //xy plane
+//    deg_accel_x_2= acos ((float)a_y/sqrt((float)(a_x*a_x+a_y*a_y+a_z*a_z)))*180/M_PI;//yz plane
+//    deg_accel_y_2= acos ((float)a_z/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI;//zx plane
+//
+
+
+     deg_accel_z_2= atan2(a_x,a_y )*180/M_PI; //xy plane
+    deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
+    deg_accel_y_2= atan2(a_x,a_z )*180/M_PI;//zx plane
+
     //exception("a_x/accel",t,10);   //acos (  )*180/M_PI
 
 //    deg_accel_x_2=(deg_accel_x_2<0)?(360+deg_accel_x_2):deg_accel_x_2;
