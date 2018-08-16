@@ -166,8 +166,9 @@ void my_put_float(float number,int div)
 }
 void ena_int();
 void dis_int();
-void gyro_cal();
+void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z,);
 void exception(unsigned char *string,float number,int div);
+void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z);
 
 
 float g_x;
@@ -202,7 +203,12 @@ float time;
 #define _EXCEPTION_ON 1
 
 void main(void)
-{int counter_temp=0;
+{
+
+
+int counter_temp=0;
+int OFF_X,OFF_Y,OFF_Z;
+
 DDRA=(0<<DDA7) | (0<<DDA6) | (0<<DDA5) | (0<<DDA4) | (0<<DDA3) | (0<<DDA2) | (0<<DDA1) | (0<<DDA0);
 PORTA=(0<<PORTA7) | (0<<PORTA6) | (0<<PORTA5) | (0<<PORTA4) | (0<<PORTA3) | (0<<PORTA2) | (0<<PORTA1) | (0<<PORTA0);
 DDRB=(0<<DDB7) | (0<<DDB6) | (0<<DDB5) | (0<<DDB4) | (0<<DDB3) | (0<<DDB2) | (0<<DDB1) | (0<<DDB0);
@@ -248,33 +254,37 @@ UBRRL=0x33;
 i2c_init();
 
 // Global enable interrupts
-#asm("sei")
 my_putstr("-------------------");
 my_putstr("\nsalam chetro\n");
 mpu6050_init();
 
+mpu_calibrate(&OFF_X,&OFF_Y,&OFF_Z);
+#asm("sei")
+
 while (1)
       {
-        //my_put_int(degree_x);
-        //my_putstr("\t");
-        //my_put_int(degree_y);
-        //my_putstr("\t");
-        if(counter_temp>50)
+
+        if(counter_temp>5)
         {
-            my_put_int(degree_x);
-            //my_putstr("\t");
+           // my_put_int(degree_x);
+           // my_putstr("\t");
+           // my_put_int(degree_y);
+           // my_putstr("\t");
+            my_put_int(degree_z);
+            my_putstr("\t");
             my_putstr("\n");
             counter_temp=0;
         }
         else
             counter_temp++;
-        gyro_cal();
-       // delay_ms(200);
+
+
+        gyro_cal(OFF_X,OFF_Y,OFF_Z);
 
 
     }
 }
-void gyro_cal()
+void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z,)
 {
 
         int t_x,t_y,t_z;
@@ -282,31 +292,30 @@ void gyro_cal()
         t_y=g_y;
         t_z=g_z;
 
-        g_x=(float)mpu6050_get_gyro_x()+OFFSET;
-        g_y=(float)mpu6050_get_gyro_y()+OFFSET;
-        g_z=(float)mpu6050_get_gyro_z()+OFFSET;
-
+        g_x=(float)mpu6050_get_gyro_x()-OFF_X;
+        g_y=(float)mpu6050_get_gyro_y()-OFF_Y;
+        g_z=(float)mpu6050_get_gyro_z()-OFF_Z;
 
         g_x=(int)g_x/GRYRO_SCALE;
         g_y=(int)g_y/GRYRO_SCALE;
         g_z=(int)g_z/GRYRO_SCALE;
 
-        g_x=t_x*.7+g_x*.3;
-        g_y=t_y*.7+g_y*.3;
-        g_z=t_z*.7+g_z*.3;
+        g_x=t_x*.1+g_x*.9;
+        g_y=t_y*.1+g_y*.9;
+        g_z=t_z*.1+g_z*.9;
 
 
         dis_int();
 
-        degree_x+=(float)g_x*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=;
-        degree_y+=(float)g_y*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=TIME/GRYRO_SCALE;
+        //degree_x+=(float)g_x*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=;
+        //degree_y+=(float)g_y*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=TIME/GRYRO_SCALE;
         degree_z+=(float)g_z*(float)(counter*256+(TCNT0))*(float)TIME;//0.000000977022=TIME/GRYRO_SCALE;
-        counter=0;
 
         //exception("gx_*",(float)g_x*(float)(counter*256+(TCNT0))*(float)TIME,5);
         //exception("gy_*",(float)g_y*(float)(counter*256+(TCNT0))*(float)TIME,5);
         //exception("gz_*",(float)g_z*(float)(counter*256+(TCNT0))*(float)TIME,5);
-
+        // exception("TCNT0",TCNT0,0);
+        counter=0;
         ena_int();
 
         while((degree_x>360)||(degree_y>360)||(degree_z>360))
@@ -319,7 +328,6 @@ void gyro_cal()
                 degree_z=degree_z-360;
             //exception("upper",6,0);
         }
-
         while((degree_x<0)||(degree_z<0)||(degree_y<0))
         {
             if(degree_x<0)
@@ -330,6 +338,36 @@ void gyro_cal()
                 degree_z=360+degree_z;
             //exception("leve",5,0);
         }
+}
+void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z)
+{
+        int i=0;
+
+    my_putstr("\n----------start_calibratin-------\n");
+
+    for(;i<500;i++)
+    {
+           *OFFSET_X=(float)mpu6050_get_gyro_x();
+           *OFFSET_Y=(float)mpu6050_get_gyro_y();
+           *OFFSET_Z=(float)mpu6050_get_gyro_z();
+    }
+    i=0;
+    for(;i<50;i++)
+    {
+           *OFFSET_X+=mpu6050_get_gyro_x();
+           *OFFSET_Y+=mpu6050_get_gyro_y();
+           *OFFSET_Z+=mpu6050_get_gyro_z();
+    }
+    *OFFSET_X/=50;
+    *OFFSET_Y/=50;
+    *OFFSET_Z/=50;
+
+    exception("G_x_OFFSET",*OFFSET_X,0);
+    exception("G_y_OFFSET",*OFFSET_Y,0);
+    exception("G_z_OFFSET",*OFFSET_Z,0);
+
+    delay_ms(1000);
+    my_putstr("\n----------finish_calibratin-------\n");
 }
 void exception(unsigned char *string,float number,int div)
 {
