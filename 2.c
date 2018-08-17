@@ -174,6 +174,7 @@ void exception(unsigned char *string,float number,int div);
 void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z);
 //float mabs(float numb) ;
 void fuse_data(int OFF_X,int OFF_Y,int OFF_Z);
+float make_zero_degree(int zero,int degree);
 
 
 float g_x;
@@ -299,24 +300,13 @@ while (1)
 
         if(counter_temp>1)
         {
-            //my_put_int(degree_x);
-            //my_putstr("\t");
-            //my_put_int(deg_accel_x_2);
-            //my_putstr("\t");
-            my_put_int(degree_x);
+
+
+            make_zero_degree(180,degree_x);
+
+            my_put_int( make_zero_degree(180,deg_accel_x_2));
             my_putstr("\t");
-            my_put_int(deg_accel_x_2);
-            my_putstr("\t");
-           // my_put_int(fused_y);
-           // my_putstr("\t");
-//            my_put_int(degree_z);
-//            my_putstr("\t");
-////
-//            my_put_int(fused_x);
-//            my_putstr("\t");
-//            my_put_int(fused_y);
-//            my_putstr("\t");
-            my_put_int(fused_x);
+            my_put_int(make_zero_degree(180,fused_x));
             my_putstr("\t");
 
             my_putstr("\n");
@@ -332,7 +322,20 @@ while (1)
 
     }
 }
+float make_zero_degree(int zero,int degree)
+{
+    float x_2;
+    if(degree>zero)
+       {
+            x_2=degree-zero;
+       }
+       else
+       {
+            x_2=360-(zero-degree);
+       }
+    return x_2;
 
+}
 void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 {
 
