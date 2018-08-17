@@ -300,14 +300,11 @@ while (1)
 
         if(counter_temp>1)
         {
-
-
-            make_zero_degree(180,degree_x);
-
-            my_put_int( make_zero_degree(180,deg_accel_x_2));
+            my_put_int( make_zero_degree(180,fused_x));
             my_putstr("\t");
-            my_put_int(make_zero_degree(180,fused_x));
+            my_put_int(make_zero_degree(180,fused_y));
             my_putstr("\t");
+            my_put_int(make_zero_degree(180,fused_z));
 
             my_putstr("\n");
 
@@ -340,6 +337,9 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 {
 
     int t_x,t_y,t_z;
+    float CO_A=.98;
+    float CO_B=.02;
+
     int p_x,p_y,p_z;
     t_x=g_x;
     t_y=g_y;
@@ -361,9 +361,9 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
     g_y=(int)g_y/GRYRO_SCALE;
     g_z=(int)g_z/GRYRO_SCALE;
 
-    g_x=t_x*.2+g_x*.8;
-    g_y=t_y*.2+g_y*.8;
-    g_z=t_z*.2+g_z*.8;
+    g_x=t_x*.3+g_x*.7;
+    g_y=t_y*.3+g_y*.7;
+    g_z=t_z*.3+g_z*.7;
 
     a_x/=100;
     a_y/=100;//because of avr variable size i destroyed my precision
@@ -401,14 +401,14 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
         if((fused_x-deg_accel_x_2)>180)
              fused_x=deg_accel_x_2;
         else
-            fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
+            fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*CO_A+deg_accel_x_2*CO_B;
     }
     else if(fused_x<deg_accel_x_2)
     {
         if((deg_accel_x_2-fused_x)>180)
            fused_x=deg_accel_x_2;
         else
-            fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
+            fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*CO_A+deg_accel_x_2*CO_B;
 
     }
     //////////y
@@ -418,14 +418,14 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
         if((fused_y-deg_accel_y_2)>180)
              fused_y=deg_accel_y_2;
         else
-            fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
+            fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*CO_A+deg_accel_y_2*CO_B;
     }
     else if(fused_y<deg_accel_y_2)
     {
         if((deg_accel_y_2-fused_y)>180)
            fused_y=deg_accel_y_2;
         else
-            fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
+            fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*CO_A+deg_accel_y_2*CO_B;
 
     }
      //////////z
@@ -435,14 +435,14 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
         if((fused_z-deg_accel_z_2)>180)
              fused_z=deg_accel_z_2;
         else
-            fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
+            fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*CO_A+deg_accel_z_2*CO_B;
     }
     else if(fused_z<deg_accel_z_2)
     {
         if((deg_accel_z_2-fused_z)>180)
            fused_z=deg_accel_z_2;
         else
-            fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
+            fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*CO_A+deg_accel_z_2*CO_B;
 
     }
 
