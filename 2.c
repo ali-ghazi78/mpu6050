@@ -171,6 +171,7 @@ void ena_int();
 void dis_int();
 //void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z);
 //void accel_cal_2();
+
 //void accel_cal(int OFF_X,int OFF_Y,int OFF_Z);
 void exception(unsigned char *string,float number,int div);
 void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z);
@@ -182,21 +183,40 @@ float g_x;
 float g_y;
 float g_z;
 
-float a_x;
-float a_y;
-float a_z;
+int a_x;
+int a_y;
+int a_z;
 
 float degree_x=0;
 float degree_y=0;
 float degree_z=0;
+
+float deg_accel_x=0;
+float deg_accel_y=0;
+float deg_accel_z=0;
+
 float deg_accel_x_2=0;
 float deg_accel_y_2=0;
 float deg_accel_z_2=0;
+
+float degree_fuse_x=0;
+float degree_fuse_y=0;
+float degree_fuse_z=0;
+
+int degree_x_z=0;
+int degree_y_z=0;
+int degree_z_z=0;
+
+int deg_accel_x_z=0;
+int deg_accel_y_z=0;
+int deg_accel_z_z=0;
+
 
 int counter=0;
 float fused_x=0;
 float fused_y=0;
 float fused_z=0;
+float fused_2;
 
 
 
@@ -215,6 +235,7 @@ counter++;
 TCCR0=(0<<WGM00) | (0<<COM01) | (0<<COM00) | (0<<WGM01) | (1<<CS02) | (0<<CS01) | (1<<CS00);
 }
 
+float time;
 
 #define _EXCEPTION_ON 1
 
@@ -285,12 +306,22 @@ while (1)
             //my_putstr("\t");
             //my_put_int(deg_accel_x_2);
             //my_putstr("\t");
-            my_put_int(degree_x);
-            my_putstr("\t");
-            my_put_int(deg_accel_x_2);
-            my_putstr("\t");
             my_put_int(fused_x);
             my_putstr("\t");
+            my_put_int(fused_y);
+            my_putstr("\t");
+           // my_put_int(fused_y);
+           // my_putstr("\t");
+//            my_put_int(degree_z);
+//            my_putstr("\t");
+////
+//            my_put_int(fused_x);
+//            my_putstr("\t");
+//            my_put_int(fused_y);
+//            my_putstr("\t");
+//            my_put_int(fused_z);
+//            my_putstr("\t");
+
             my_putstr("\n");
 
             counter_temp=0;
@@ -298,11 +329,13 @@ while (1)
         else
             counter_temp++;
 
+         //accel_cal_2()    ;
         fuse_data(OFF_X,OFF_Y,OFF_Z);
 
 
     }
 }
+
 void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 {
 
@@ -338,7 +371,7 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 
     a_x=a_x*.4+p_x*.6;
     a_y=a_y*.4+p_y*.6;
-    a_z=a_z*.4+p_z*.6 ;
+    a_z=a_z*.4+p_z*.6;
 
     deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
     deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
@@ -346,7 +379,7 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 
     deg_accel_x_2=(deg_accel_x_2>0)?deg_accel_x_2:360+deg_accel_x_2;
     deg_accel_y_2=(deg_accel_y_2>0)?deg_accel_y_2:360+deg_accel_y_2;
-    //deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
+    deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
     deg_accel_y_2=360-deg_accel_y_2;
     //deg_accel_z_2=360-deg_accel_z_2;
 
@@ -354,9 +387,9 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
     dis_int();
 
 
-    fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*.96+deg_accel_x_2*.04;
-    fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.96+deg_accel_y_2*.04;
-    fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.96+deg_accel_z_2*.04;
+    fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
+    fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
+    fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
 
 
     degree_x+=((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME);//0.000000977022=;
@@ -365,19 +398,19 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 
     counter=0;
     ena_int();
-    while((fused_x>360)||(fused_z>360)||(fused_y>360))
+    while((fused_x>360)||(fused_y>360))
     {
         if(fused_x>360){
-            //putchar('c');
+            putchar('c');
             fused_x=fused_x-360;
         }
         if(fused_y>360){
-            //putchar('d');
+            putchar('d');
             fused_y=fused_y-360;
         }
         if(fused_z>360){
+            putchar('d');
             fused_z=fused_z-360;
-            //exception("z",fused_z,0);
         }
 
     }
@@ -389,8 +422,16 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
             fused_y=360+fused_y;
         if(fused_z<0)
             fused_z=360+fused_z;
-
     }
+
+
+
+
+
+
+
+
+
 
     while((degree_x>360)||(degree_y>360)||(degree_z>360))
     {
@@ -400,6 +441,7 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
             degree_y=degree_y-360;
         if(degree_z>360)
             degree_z=degree_z-360;
+        //exception("upper",6,0);
     }
     while((degree_x<0)||(degree_z<0)||(degree_y<0))
     {
@@ -409,65 +451,12 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
             degree_y=360+degree_y;
         if(degree_z<0)
             degree_z=360+degree_z;
+        //exception("leve",5,0);
     }
 
 
 
-
 }
-void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z)
-{
-        int i=0;
-
-    my_putstr("\n----------start_calibratin-------\n");
-
-    for(;i<500;i++)
-    {
-           *OFFSET_X=(float)mpu6050_get_gyro_x();
-           *OFFSET_Y=(float)mpu6050_get_gyro_y();
-           *OFFSET_Z=(float)mpu6050_get_gyro_z();
-    }
-    i=0;
-    for(;i<50;i++)
-    {
-           *OFFSET_X+=mpu6050_get_gyro_x();
-           *OFFSET_Y+=mpu6050_get_gyro_y();
-           *OFFSET_Z+=mpu6050_get_gyro_z();
-    }
-    *OFFSET_X/=50;
-    *OFFSET_Y/=50;
-    *OFFSET_Z/=50;
-
-    exception("G_x_OFFSET",*OFFSET_X,0);
-    exception("G_y_OFFSET",*OFFSET_Y,0);
-    exception("G_z_OFFSET",*OFFSET_Z,0);
-
-    my_putstr("\n----------finish_calibratin-------\n");
-    delay_ms(500);
-
-}
-void exception(unsigned char *string,float number,int div)
-{
-#ifdef _EXCEPTION_ON
-
-        my_putstr("\n");
-        my_putstr(string);
-        my_putstr("{");
-        my_put_float(number,div);
-        my_putstr("}\n");
-#endif
-}
-void dis_int()
-{
-    TCCR0=0;
-}
-void ena_int()
-{
-    TCNT0=0;
-    TCCR0=(0<<WGM00) | (0<<COM01) | (0<<COM00) | (0<<WGM01) | (1<<CS02) | (0<<CS01) | (1<<CS00);
-
-}
-
 //void accel_cal_2()
 //{
 //    a_x=mpu6050_get_accel_x();
@@ -615,6 +604,61 @@ void ena_int()
 //            //exception("leve",5,0);
 //        }
 //}
+void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z)
+{
+        int i=0;
+
+    my_putstr("\n----------start_calibratin-------\n");
+
+    for(;i<500;i++)
+    {
+           *OFFSET_X=(float)mpu6050_get_gyro_x();
+           *OFFSET_Y=(float)mpu6050_get_gyro_y();
+           *OFFSET_Z=(float)mpu6050_get_gyro_z();
+    }
+    i=0;
+    for(;i<50;i++)
+    {
+           *OFFSET_X+=mpu6050_get_gyro_x();
+           *OFFSET_Y+=mpu6050_get_gyro_y();
+           *OFFSET_Z+=mpu6050_get_gyro_z();
+    }
+    *OFFSET_X/=50;
+    *OFFSET_Y/=50;
+    *OFFSET_Z/=50;
+
+    exception("G_x_OFFSET",*OFFSET_X,0);
+    exception("G_y_OFFSET",*OFFSET_Y,0);
+    exception("G_z_OFFSET",*OFFSET_Z,0);
+
+    delay_ms(1000);
+    my_putstr("\n----------finish_calibratin-------\n");
+}
+void exception(unsigned char *string,float number,int div)
+{
+#ifdef _EXCEPTION_ON
+
+        my_putstr("\n");
+        my_putstr(string);
+        my_putstr("{");
+        my_put_float(number,div);
+        my_putstr("}\n");
+#endif
+}
+void dis_int()
+{
+    TCCR0=0;
+}
+void ena_int()
+{
+TCNT0=0;
+TCCR0=(0<<WGM00) | (0<<COM01) | (0<<COM00) | (0<<WGM01) | (1<<CS02) | (0<<CS01) | (1<<CS00);
+
+}
+
+
+
+//
 //void accel_cal(int OFF_X,int OFF_Y,int OFF_Z)
 //{
 //
@@ -750,4 +794,3 @@ void ena_int()
 //
 //
 //}
-
