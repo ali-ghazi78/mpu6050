@@ -310,18 +310,6 @@ while (1)
             my_putstr("\t");
             my_put_int(fused_y);
             my_putstr("\t");
-           // my_put_int(fused_y);
-           // my_putstr("\t");
-//            my_put_int(degree_z);
-//            my_putstr("\t");
-////
-//            my_put_int(fused_x);
-//            my_putstr("\t");
-//            my_put_int(fused_y);
-//            my_putstr("\t");
-//            my_put_int(fused_z);
-//            my_putstr("\t");
-
             my_putstr("\n");
 
             counter_temp=0;
@@ -329,7 +317,6 @@ while (1)
         else
             counter_temp++;
 
-         //accel_cal_2()    ;
         fuse_data(OFF_X,OFF_Y,OFF_Z);
 
 
@@ -373,15 +360,15 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
     a_y=a_y*.4+p_y*.6;
     a_z=a_z*.4+p_z*.6;
 
-    deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
+//    deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
     deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
     deg_accel_y_2= atan2(a_x,a_z)*180/M_PI;//zx plane
 
     deg_accel_x_2=(deg_accel_x_2>0)?deg_accel_x_2:360+deg_accel_x_2;
     deg_accel_y_2=(deg_accel_y_2>0)?deg_accel_y_2:360+deg_accel_y_2;
-    deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
+//    deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
     deg_accel_y_2=360-deg_accel_y_2;
-    //deg_accel_z_2=360-deg_accel_z_2;
+//    deg_accel_z_2=360-deg_accel_z_2;
 
 
     dis_int();
@@ -389,7 +376,7 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 
     fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
     fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
-    fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
+//    fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
 
 
     degree_x+=((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME);//0.000000977022=;
@@ -414,14 +401,12 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
         }
 
     }
-    while((fused_x<0)||(fused_y<0)||(fused_z<0))
+    while((fused_x<0)||(fused_y<0))
     {
         if(fused_x<0)
             fused_x=360+fused_x;
         if(fused_y<0)
             fused_y=360+fused_y;
-        if(fused_z<0)
-            fused_z=360+fused_z;
     }
 
 
@@ -631,8 +616,9 @@ void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z)
     exception("G_y_OFFSET",*OFFSET_Y,0);
     exception("G_z_OFFSET",*OFFSET_Z,0);
 
-    delay_ms(1000);
     my_putstr("\n----------finish_calibratin-------\n");
+    delay_ms(500);
+
 }
 void exception(unsigned char *string,float number,int div)
 {
