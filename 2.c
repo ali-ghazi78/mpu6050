@@ -172,7 +172,7 @@ void dis_int();
 void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z);
 void accel_cal_2();
 
-void accel_cal();
+void accel_cal(int OFF_X,int OFF_Y,int OFF_Z);
 void exception(unsigned char *string,float number,int div);
 void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z);
 float mabs(float numb) ;
@@ -203,6 +203,10 @@ float degree_fuse_y=0;
 float degree_fuse_z=0;
 
 int counter=0;
+int fused_x=0;
+int fused_y=0;
+int fused_z=0;
+
 interrupt [TIM0_OVF] void timer0_ovf_isr(void)
 {
 TCCR0=0;
@@ -285,19 +289,24 @@ while (1)
 
         if(counter_temp>5)
         {
+
+            my_put_int(fused_x);
+            my_putstr("\t");
             my_put_int(degree_x);
-            my_putstr("\t");
-            my_put_int(degree_y);
-            my_putstr("\t");
-            my_put_int(degree_z);
-            my_putstr("\t");
-//
-            my_put_int(deg_accel_x_2);
-            my_putstr("\t");
-            my_put_int(deg_accel_y_2);
-            my_putstr("\t");
-            my_put_int(deg_accel_z_2);
-            my_putstr("\t");
+
+//            my_put_int(degree_x);
+//            my_putstr("\t");
+//            my_put_int(degree_y);
+//            my_putstr("\t");
+//            my_put_int(degree_z);
+//            my_putstr("\t");
+////
+//            my_put_int(fused_x);
+//            my_putstr("\t");
+//            my_put_int(fused_y);
+//            my_putstr("\t");
+//            my_put_int(fused_z);
+//            my_putstr("\t");
 
             my_putstr("\n");
 
@@ -306,39 +315,94 @@ while (1)
         else
             counter_temp++;
 
-         accel_cal_2()    ;
-        gyro_cal(OFF_X,OFF_Y,OFF_Z);
+         //accel_cal_2()    ;
+        accel_cal(OFF_X,OFF_Y,OFF_Z);
 
 
     }
 }
-//void accel_cal()
-//{
-//    float accel;
-//    a_x=mpu6050_get_accel_x()*0.7+.3*a_x;
-//    a_y=mpu6050_get_accel_y()*0.7+.3*a_y;
-//    a_z=mpu6050_get_accel_z()*0.7+.3*a_z;
-//
-//
-//
-////    a_x=a_x/100;//just devide in order to reduce extra bit
-////    a_y=a_y/100;
-////    a_z=a_z/100;
-////
-////    exception("a_x",a_x,7);
-////    exception("a_y",a_y,7);
-////    exception("a_z",a_z,7);
-//
-//    accel=a_x*a_x+a_y*a_y+a_z*a_z;
-//    accel=sqrt(accel);
-//
-//    deg_accel_x= acos ( a_x/accel )*180/M_PI;
-//    deg_accel_y= acos (a_y/accel )*180/M_PI;
-//    deg_accel_z= acos (a_z/accel )*180/M_PI;
-//    //exception("a_x/accel",t,10);   //acos (  )*180/M_PI
-//
-//
-//}
+void accel_cal(int OFF_X,int OFF_Y,int OFF_Z)
+{
+
+
+    int t_x,t_y,t_z;
+    t_x=g_x;
+    t_y=g_y;
+    t_z=g_z;
+
+    g_x=(float)mpu6050_get_gyro_x()-OFF_X;
+    g_y=(float)mpu6050_get_gyro_y()-OFF_Y;
+    g_z=(float)mpu6050_get_gyro_z()-OFF_Z;
+
+    a_x=mpu6050_get_accel_x();
+    a_y=mpu6050_get_accel_y();
+    a_z=mpu6050_get_accel_z();
+
+    g_x=(int)g_x/GRYRO_SCALE;
+    g_y=(int)g_y/GRYRO_SCALE;
+    g_z=(int)g_z/GRYRO_SCALE;
+
+    g_x=t_x*.1+g_x*.9;
+    g_y=t_y*.1+g_y*.9;
+    g_z=t_z*.1+g_z*.9;
+
+    a_x/=100;
+    a_y/=100;//because of avr variable size i destroyed my precision
+    a_z/=100;
+
+    deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
+    deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
+    deg_accel_y_2= atan2(a_x,a_z)*180/M_PI;//zx plane
+
+    deg_accel_x_2=(deg_accel_x_2>0)?deg_accel_x_2:360+deg_accel_x_2;
+    deg_accel_y_2=(deg_accel_y_2>0)?deg_accel_y_2:360+deg_accel_y_2;
+    deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
+    deg_accel_y_2=360-deg_accel_y_2;
+
+    //deg_accel_z_2=360-deg_accel_z_2;
+
+
+    dis_int();
+
+    degree_x+=((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME);//0.000000977022=;
+    degree_y+=((float)g_y*(float)(counter*256+(TCNT0))*(float)TIME);//0.000000977022=TIME/GRYRO_SCALE;
+    degree_z+=((float)g_z*(float)(counter*256+(TCNT0))*(float)TIME);//0.000000977022=TIME/GRYRO_SCALE;
+
+    counter=0;
+    ena_int();
+
+    while((degree_x>360)||(degree_y>360)||(degree_z>360))
+    {
+        if(degree_x>360)
+            degree_x=degree_x-360;
+        if(degree_y>360)
+            degree_y=degree_y-360;
+        if(degree_z>360)
+            degree_z=degree_z-360;
+    }
+    while((degree_x<0)||(degree_z<0)||(degree_y<0))
+    {
+        if(degree_x<0)
+            degree_x=360+degree_x;
+        if(degree_y<0)
+            degree_y=360+degree_y;
+        if(degree_z<0)
+            degree_z=360+degree_z;
+    }
+    if((degree_x<180&&deg_accel_x_2<180)||(degree_x>180&&deg_accel_x_2>180))
+    {
+        fused_x=(float)degree_x*.7+(float)deg_accel_x_2*.3;
+        //fused_y=fused_y*.3+(degree_y)*.3+deg_accel_y_2*.4;
+        //fused_z=fused_z*.3+(degree_z)*.3+deg_accel_z_2*.4;
+    }
+    else
+    {
+        fused_x=degree_x*.7+fused_x*.3;
+    }
+
+
+
+}
 void accel_cal_2()
 {
     a_x=mpu6050_get_accel_x();
