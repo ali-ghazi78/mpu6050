@@ -191,32 +191,29 @@ float degree_x=0;
 float degree_y=0;
 float degree_z=0;
 
-float deg_accel_x=0;
-float deg_accel_y=0;
-float deg_accel_z=0;
 
 float deg_accel_x_2=0;
 float deg_accel_y_2=0;
-float deg_accel_z_2=0;
-
-float degree_fuse_x=0;
-float degree_fuse_y=0;
-float degree_fuse_z=0;
-
-int degree_x_z=0;
-int degree_y_z=0;
-int degree_z_z=0;
-
-int deg_accel_x_z=0;
-int deg_accel_y_z=0;
-int deg_accel_z_z=0;
+//float deg_accel_z_2=0;
+//
+//float degree_fuse_x=0;
+//float degree_fuse_y=0;
+//float degree_fuse_z=0;
+//
+//int degree_x_z=0;
+//int degree_y_z=0;
+//int degree_z_z=0;
+//
+//int deg_accel_x_z=0;
+//int deg_accel_y_z=0;
+//int deg_accel_z_z=0;
 
 
 int counter=0;
 float fused_x=0;
 float fused_y=0;
 float fused_z=0;
-float fused_2;
+//float fused_2;
 
 
 
@@ -235,7 +232,7 @@ counter++;
 TCCR0=(0<<WGM00) | (0<<COM01) | (0<<COM00) | (0<<WGM01) | (1<<CS02) | (0<<CS01) | (1<<CS00);
 }
 
-float time;
+//float time;
 
 #define _EXCEPTION_ON 1
 
