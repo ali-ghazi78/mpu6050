@@ -175,6 +175,7 @@ void accel_cal_2();
 void accel_cal();
 void exception(unsigned char *string,float number,int div);
 void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z);
+float mabs(float numb) ;
 
 
 float g_x;
@@ -344,9 +345,9 @@ void accel_cal_2()
     a_y=mpu6050_get_accel_y();
     a_z=mpu6050_get_accel_z();
 
-     a_x/=1000;
-     a_y/=1000;
-     a_z/=1000;
+     a_x/=100;
+     a_y/=100;
+     a_z/=100;
 
 
 
@@ -355,16 +356,44 @@ void accel_cal_2()
 //    exception("a_y",a_y,7);
 //    exception("a_z",a_z,7);
 
+//
+//    deg_accel_x_2= acos ((float)a_x/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI; //xy plane
+//    deg_accel_y_2= acos ((float)a_y/sqrt((float)(a_x*a_x+a_y*a_y+a_z*a_z)))*180/M_PI;//yz plane
+//    deg_accel_z_2= acos  ((float)a_z/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI;//zx plane
+//    if(a_x>0&&a_z>0)
+//    {
+//        deg_accel_z_2=360-deg_accel_z_2 ; //xy plane
+//      //  putchar('a');
+//    }
+//    else if(a_x<0&&a_z>0)
+//    {
+//    //    deg_accel_z_2=270+(90-deg_accel_x_2) ;
+//    }
+//    else if(a_x>0&&a_z<0)
+//    {
+//
+//        deg_accel_z_2=270+(90-deg_accel_z_2) ;
+//        deg_accel_x_2=270+(90-deg_accel_x_2) ; //xy plane
+//    }
+//    else if(a_x<0&&a_z<0)
+//    {
+//        deg_accel_x_2=360-deg_accel_x_2 ; //xy plane
+//    }
 
-//    deg_accel_z_2= acos ((float)a_x/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI; //xy plane
-//    deg_accel_x_2= acos ((float)a_y/sqrt((float)(a_x*a_x+a_y*a_y+a_z*a_z)))*180/M_PI;//yz plane
-//    deg_accel_y_2= acos ((float)a_z/(float)sqrt((a_x*a_x+a_y*a_y+a_z*a_z)) )*180/M_PI;//zx plane
+
+
+
+    deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
+    deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
+    deg_accel_y_2= atan2(a_x,a_z)*180/M_PI;//zx plane
 //
 
+    deg_accel_x_2=(deg_accel_x_2>0)?deg_accel_x_2:360+deg_accel_x_2;
+    deg_accel_y_2=(deg_accel_y_2>0)?deg_accel_y_2:360+deg_accel_y_2;
+    deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
+    deg_accel_y_2=360-deg_accel_y_2;
+    deg_accel_z_2=360-deg_accel_z_2;
 
-     deg_accel_z_2= atan2(a_x,a_y )*180/M_PI; //xy plane
-    deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
-    deg_accel_y_2= atan2(a_x,a_z )*180/M_PI;//zx plane
 
     //exception("a_x/accel",t,10);   //acos (  )*180/M_PI
 
@@ -398,7 +427,10 @@ void accel_cal_2()
 //        //exception("leve",5,0);
 //    }
 }
-
+float mabs(float numb)
+{
+    return (numb>0)?(numb):(numb*-1);
+}
 void gyro_cal(int OFF_X,int OFF_Y,int OFF_Z,)
 {
 
