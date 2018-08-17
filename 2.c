@@ -215,7 +215,7 @@ int deg_accel_z_z=0;
 int counter=0;
 float fused_x=0;
 float fused_y=0;
-float fused_z=0;
+int fused_z=0;
 float fused_2;
 
 
@@ -306,11 +306,11 @@ while (1)
             //my_putstr("\t");
             //my_put_int(deg_accel_x_2);
             //my_putstr("\t");
-            my_put_int(degree_y);
+            my_put_int(degree_z);
             my_putstr("\t");
-            my_put_int(deg_accel_y_2);
+            my_put_int(deg_accel_z_2);
             my_putstr("\t");
-            my_put_int(fused_y);
+            my_put_int(fused_z);
             my_putstr("\t");
 //            my_put_int(degree_z);
 //            my_putstr("\t");
@@ -506,7 +506,7 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 
     a_x=a_x*.4+p_x*.6;
     a_y=a_y*.4+p_y*.6;
-    a_z=a_z*.4+p_z*.6;
+    a_z=a_z*.4+p_z*.6 ;
 
     deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
     deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
@@ -515,16 +515,16 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
     deg_accel_x_2=(deg_accel_x_2>0)?deg_accel_x_2:360+deg_accel_x_2;
     deg_accel_y_2=(deg_accel_y_2>0)?deg_accel_y_2:360+deg_accel_y_2;
     deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
-    //deg_accel_y_2=360-deg_accel_y_2;
-    //deg_accel_z_2=360-deg_accel_z_2;
+    deg_accel_y_2=360-deg_accel_y_2;
+    deg_accel_z_2=360-deg_accel_z_2;
 
 
     dis_int();
 
 
-    fused_x=(((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
-    fused_y=(((float)g_y*(float)(counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
-    fused_z=(((float)g_z*(float)(counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
+    fused_x=(((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME)+fused_x)*.96+deg_accel_x_2*.04;
+    fused_y=(((float)g_y*(float)(counter*256+(TCNT0))*(float)TIME)+fused_y)*.96+deg_accel_y_2*.04;
+    fused_z=(((float)g_z*(float)(counter*256+(TCNT0))*(float)TIME)+fused_z)*.96+deg_accel_z_2*.04;
 
 
     degree_x+=((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME);//0.000000977022=;
@@ -533,7 +533,7 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 
     counter=0;
     ena_int();
-    while((fused_x>360)||(fused_y>360))
+    while((fused_x>360)||(fused_z>360)||(fused_y>360))
     {
         if(fused_x>360){
             putchar('c');
@@ -542,6 +542,10 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
         if(fused_y>360){
             putchar('d');
             fused_y=fused_y-360;
+        }
+        if(fused_z>360){
+            fused_z=fused_z-360;
+            exception("z",fused_z,0);
         }
 
     }
@@ -553,6 +557,7 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
             fused_y=360+fused_y;
         if(fused_z<0)
             fused_z=360+fused_z;
+
     }
 
 
