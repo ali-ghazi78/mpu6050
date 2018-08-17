@@ -285,11 +285,11 @@ while (1)
             //my_putstr("\t");
             //my_put_int(deg_accel_x_2);
             //my_putstr("\t");
-            my_put_int(degree_z);
+            my_put_int(degree_x);
             my_putstr("\t");
-            my_put_int(deg_accel_z_2);
+            my_put_int(deg_accel_x_2);
             my_putstr("\t");
-            my_put_int(fused_z);
+            my_put_int(fused_x);
             my_putstr("\t");
             my_putstr("\n");
 
