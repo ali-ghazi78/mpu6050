@@ -4,15 +4,12 @@ CodeWizardAVR V3.12 Advanced
 Automatic Program Generator
 © Copyright 1998-2014 Pavel Haiduc, HP InfoTech s.r.l.
 http://www.hpinfotech.com
-
 Project :
 Version :
 Date    : 8/15/2018
 Author  :
 Company :
 Comments:
-
-
 Chip type               : ATmega32A
 Program type            : Application
 AVR Core Clock frequency: 8.000000 MHz
@@ -191,29 +188,32 @@ float degree_x=0;
 float degree_y=0;
 float degree_z=0;
 
+float deg_accel_x=0;
+float deg_accel_y=0;
+float deg_accel_z=0;
 
 float deg_accel_x_2=0;
 float deg_accel_y_2=0;
-//float deg_accel_z_2=0;
-//
-//float degree_fuse_x=0;
-//float degree_fuse_y=0;
-//float degree_fuse_z=0;
-//
-//int degree_x_z=0;
-//int degree_y_z=0;
-//int degree_z_z=0;
-//
-//int deg_accel_x_z=0;
-//int deg_accel_y_z=0;
-//int deg_accel_z_z=0;
+float deg_accel_z_2=0;
+
+float degree_fuse_x=0;
+float degree_fuse_y=0;
+float degree_fuse_z=0;
+
+int degree_x_z=0;
+int degree_y_z=0;
+int degree_z_z=0;
+
+int deg_accel_x_z=0;
+int deg_accel_y_z=0;
+int deg_accel_z_z=0;
 
 
 int counter=0;
 float fused_x=0;
 float fused_y=0;
 float fused_z=0;
-//float fused_2;
+float fused_2;
 
 
 
@@ -232,7 +232,7 @@ counter++;
 TCCR0=(0<<WGM00) | (0<<COM01) | (0<<COM00) | (0<<WGM01) | (1<<CS02) | (0<<CS01) | (1<<CS00);
 }
 
-//float time;
+float time;
 
 #define _EXCEPTION_ON 1
 
@@ -303,10 +303,22 @@ while (1)
             //my_putstr("\t");
             //my_put_int(deg_accel_x_2);
             //my_putstr("\t");
+            my_put_int(degree_x);
+            my_putstr("\t");
+            my_put_int(deg_accel_x_2);
+            my_putstr("\t");
+           // my_put_int(fused_y);
+           // my_putstr("\t");
+//            my_put_int(degree_z);
+//            my_putstr("\t");
+////
+//            my_put_int(fused_x);
+//            my_putstr("\t");
+//            my_put_int(fused_y);
+//            my_putstr("\t");
             my_put_int(fused_x);
             my_putstr("\t");
-            my_put_int(fused_y);
-            my_putstr("\t");
+
             my_putstr("\n");
 
             counter_temp=0;
@@ -314,6 +326,7 @@ while (1)
         else
             counter_temp++;
 
+         //accel_cal_2()    ;
         fuse_data(OFF_X,OFF_Y,OFF_Z);
 
 
@@ -356,23 +369,85 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
     a_x=a_x*.4+p_x*.6;
     a_y=a_y*.4+p_y*.6;
     a_z=a_z*.4+p_z*.6;
+    if((a_x==0&&a_y==0))
+        deg_accel_z_2=0;
+    else
+        deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
 
-//    deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
-    deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
-    deg_accel_y_2= atan2(a_x,a_z)*180/M_PI;//zx plane
+    if((a_y==0&&a_z==0))
+        deg_accel_x_2=0;
+    else
+        deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
+
+    if((a_x==0&&a_z==0))
+        deg_accel_y_2=0;
+    else
+        deg_accel_y_2= atan2(a_x,a_z)*180/M_PI;//zx plane
 
     deg_accel_x_2=(deg_accel_x_2>0)?deg_accel_x_2:360+deg_accel_x_2;
     deg_accel_y_2=(deg_accel_y_2>0)?deg_accel_y_2:360+deg_accel_y_2;
-//    deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
+    deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
     deg_accel_y_2=360-deg_accel_y_2;
-//    deg_accel_z_2=360-deg_accel_z_2;
+    deg_accel_z_2=360-deg_accel_z_2;
 
 
     dis_int();
+    //////////x
+    if(fused_x>deg_accel_x_2)
+    {
+        if((fused_x-deg_accel_x_2)>180)
+             fused_x=deg_accel_x_2;
+        else
+            fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
+    }
+    else if(fused_x<deg_accel_x_2)
+    {
+        if((deg_accel_x_2-fused_x)>180)
+           fused_x=deg_accel_x_2;
+        else
+            fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
+
+    }
+    //////////y
+
+        if(fused_y>deg_accel_y_2)
+    {
+        if((fused_y-deg_accel_y_2)>180)
+             fused_y=deg_accel_y_2;
+        else
+            fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
+    }
+    else if(fused_y<deg_accel_y_2)
+    {
+        if((deg_accel_y_2-fused_y)>180)
+           fused_y=deg_accel_y_2;
+        else
+            fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
+
+    }
+     //////////z
+
+        if(fused_z>deg_accel_z_2)
+    {
+        if((fused_z-deg_accel_z_2)>180)
+             fused_z=deg_accel_z_2;
+        else
+            fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
+    }
+    else if(fused_z<deg_accel_z_2)
+    {
+        if((deg_accel_z_2-fused_z)>180)
+           fused_z=deg_accel_z_2;
+        else
+            fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
+
+    }
 
 
-    fused_x=(((float)g_x*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
-    fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
+
+
+//
+//    fused_y=(((float)g_y*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
 //    fused_z=(((float)g_z*(float)((long)counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
 
 
@@ -398,12 +473,14 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
         }
 
     }
-    while((fused_x<0)||(fused_y<0))
+    while((fused_x<0)||(fused_y<0)||(fused_z<0))
     {
         if(fused_x<0)
             fused_x=360+fused_x;
         if(fused_y<0)
             fused_y=360+fused_y;
+        if(fused_z<0)
+            fused_z=360+fused_z;
     }
 
 
@@ -613,9 +690,8 @@ void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z)
     exception("G_y_OFFSET",*OFFSET_Y,0);
     exception("G_z_OFFSET",*OFFSET_Z,0);
 
+    delay_ms(1000);
     my_putstr("\n----------finish_calibratin-------\n");
-    delay_ms(500);
-
 }
 void exception(unsigned char *string,float number,int div)
 {
