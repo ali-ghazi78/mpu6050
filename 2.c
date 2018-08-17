@@ -213,10 +213,10 @@ int deg_accel_z_z=0;
 
 
 int counter=0;
-int fused_x=0;
-int fused_y=0;
-int fused_z=0;
-int fused_2;
+float fused_x=0;
+float fused_y=0;
+float fused_z=0;
+float fused_2;
 
 
 
@@ -302,16 +302,16 @@ while (1)
 
         if(counter_temp>1)
         {
-            my_put_int(degree_x);
+            //my_put_int(degree_x);
+            //my_putstr("\t");
+            //my_put_int(deg_accel_x_2);
+            //my_putstr("\t");
+            my_put_int(degree_y);
             my_putstr("\t");
-            my_put_int(deg_accel_x_2);
+            my_put_int(deg_accel_y_2);
             my_putstr("\t");
-            my_put_int(fused_x);
+            my_put_int(fused_y);
             my_putstr("\t");
-            my_put_int(fused_2);
-            my_putstr("\t");
-//            my_put_int(degree_y);
-//            my_putstr("\t");
 //            my_put_int(degree_z);
 //            my_putstr("\t");
 ////
@@ -515,18 +515,16 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
     deg_accel_x_2=(deg_accel_x_2>0)?deg_accel_x_2:360+deg_accel_x_2;
     deg_accel_y_2=(deg_accel_y_2>0)?deg_accel_y_2:360+deg_accel_y_2;
     deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
-    deg_accel_y_2=360-deg_accel_y_2;
-
+    //deg_accel_y_2=360-deg_accel_y_2;
     //deg_accel_z_2=360-deg_accel_z_2;
 
 
     dis_int();
 
 
-    fused_x=(((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME)*0+fused_x)*.9+deg_accel_x_2*.1;
-    fused_2=(((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME)+fused_2)*.9+deg_accel_x_2*.1;
-    //fused_y=fused_y*.3+(degree_y_z)*.3+deg_accel_y_z*.4;
-    //fused_z=fused_z*.3+(degree_z_z)*.3+deg_accel_z_z*.4;
+    fused_x=(((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME)+fused_x)*.98+deg_accel_x_2*.02;
+    fused_y=(((float)g_y*(float)(counter*256+(TCNT0))*(float)TIME)+fused_y)*.98+deg_accel_y_2*.02;
+    fused_z=(((float)g_z*(float)(counter*256+(TCNT0))*(float)TIME)+fused_z)*.98+deg_accel_z_2*.02;
 
 
     degree_x+=((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME);//0.000000977022=;
@@ -535,16 +533,36 @@ void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
 
     counter=0;
     ena_int();
-    while(fused_x>360)
+    while((fused_x>360)||(fused_y>360))
     {
-        if(fused_x>360)
+        if(fused_x>360){
+            putchar('c');
             fused_x=fused_x-360;
+        }
+        if(fused_y>360){
+            putchar('d');
+            fused_y=fused_y-360;
+        }
+
     }
-    while(fused_x<0)
+    while((fused_x<0)||(fused_y<0)||(fused_z<0))
     {
         if(fused_x<0)
             fused_x=360+fused_x;
+        if(fused_y<0)
+            fused_y=360+fused_y;
+        if(fused_z<0)
+            fused_z=360+fused_z;
     }
+
+
+
+
+
+
+
+
+
 
     while((degree_x>360)||(degree_y>360)||(degree_z>360))
     {
