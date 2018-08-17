@@ -202,10 +202,22 @@ float degree_fuse_x=0;
 float degree_fuse_y=0;
 float degree_fuse_z=0;
 
+int degree_x_z=0;
+int degree_y_z=0;
+int degree_z_z=0;
+
+int deg_accel_x_z=0;
+int deg_accel_y_z=0;
+int deg_accel_z_z=0;
+
+
 int counter=0;
 int fused_x=0;
 int fused_y=0;
 int fused_z=0;
+
+
+
 
 interrupt [TIM0_OVF] void timer0_ovf_isr(void)
 {
@@ -287,15 +299,14 @@ mpu_calibrate(&OFF_X,&OFF_Y,&OFF_Z);
 while (1)
       {
 
-        if(counter_temp>5)
+        if(counter_temp>1)
         {
-
+            my_put_int(degree_x_z);
+            my_putstr("\t");
+            my_put_int(deg_accel_x_z);
+            my_putstr("\t");
             my_put_int(fused_x);
             my_putstr("\t");
-            my_put_int(degree_x);
-
-//            my_put_int(degree_x);
-//            my_putstr("\t");
 //            my_put_int(degree_y);
 //            my_putstr("\t");
 //            my_put_int(degree_z);
@@ -326,9 +337,15 @@ void accel_cal(int OFF_X,int OFF_Y,int OFF_Z)
 
 
     int t_x,t_y,t_z;
+    int zero=180;
+    int p_x,p_y,p_z;
     t_x=g_x;
     t_y=g_y;
     t_z=g_z;
+
+    p_x=a_x;
+    p_y=a_y;
+    p_z=a_z;
 
     g_x=(float)mpu6050_get_gyro_x()-OFF_X;
     g_y=(float)mpu6050_get_gyro_y()-OFF_Y;
@@ -342,13 +359,17 @@ void accel_cal(int OFF_X,int OFF_Y,int OFF_Z)
     g_y=(int)g_y/GRYRO_SCALE;
     g_z=(int)g_z/GRYRO_SCALE;
 
-    g_x=t_x*.1+g_x*.9;
-    g_y=t_y*.1+g_y*.9;
-    g_z=t_z*.1+g_z*.9;
+    g_x=t_x*.2+g_x*.8;
+    g_y=t_y*.2+g_y*.8;
+    g_z=t_z*.2+g_z*.8;
 
     a_x/=100;
     a_y/=100;//because of avr variable size i destroyed my precision
     a_z/=100;
+
+    a_x=a_x*.4+p_x*.6;
+    a_y=a_y*.4+p_y*.6;
+    a_z=a_z*.4+p_z*.6;
 
     deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
     deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
@@ -370,7 +391,6 @@ void accel_cal(int OFF_X,int OFF_Y,int OFF_Z)
 
     counter=0;
     ena_int();
-
     while((degree_x>360)||(degree_y>360)||(degree_z>360))
     {
         if(degree_x>360)
@@ -389,16 +409,60 @@ void accel_cal(int OFF_X,int OFF_Y,int OFF_Z)
         if(degree_z<0)
             degree_z=360+degree_z;
     }
-    if((degree_x<180&&deg_accel_x_2<180)||(degree_x>180&&deg_accel_x_2>180))
+
+    degree_x_z=0;
+    if(zero<=degree_x)
     {
-        fused_x=(float)degree_x*.7+(float)deg_accel_x_2*.3;
-        //fused_y=fused_y*.3+(degree_y)*.3+deg_accel_y_2*.4;
-        //fused_z=fused_z*.3+(degree_z)*.3+deg_accel_z_2*.4;
+        degree_x_z=degree_x-zero;
     }
     else
     {
-        fused_x=degree_x*.7+fused_x*.3;
+        degree_x_z=360-(zero-degree_x);
     }
+    if(zero<=degree_y)
+    {
+        degree_y_z=degree_y-zero;
+    }
+    else
+    {
+        degree_y_z=360-(zero-degree_y);
+    }if(zero<=degree_z)
+    {
+        degree_z_z=degree_z-zero;
+    }
+    else
+    {
+        degree_z_z=360-(zero-degree_z);
+    }
+    ////
+    if(zero<=deg_accel_x_2)
+    {
+        deg_accel_x_z=deg_accel_x_2-zero;
+    }
+    else
+    {
+        deg_accel_x_z=360-(zero-deg_accel_x_2);
+    }
+    if(zero<=deg_accel_y_2)
+    {
+        deg_accel_y_z=deg_accel_y_2-zero;
+    }
+    else
+    {
+        deg_accel_y_z=360-(zero-deg_accel_y_2);
+    }
+    if(zero<=deg_accel_z_2)
+    {
+        deg_accel_z_z=deg_accel_z_2-zero;
+    }
+    else
+    {
+        deg_accel_z_z=360-(zero-deg_accel_z_2);
+    }
+
+    fused_x=(degree_x_z)*.3+deg_accel_x_z*.1+fused_x*.6;
+    fused_y=fused_y*.3+(degree_y_z)*.3+deg_accel_y_z*.4;
+    fused_z=fused_z*.3+(degree_z_z)*.3+deg_accel_z_z*.4;
 
 
 
