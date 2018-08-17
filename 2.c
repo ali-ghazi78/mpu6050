@@ -176,6 +176,7 @@ void accel_cal(int OFF_X,int OFF_Y,int OFF_Z);
 void exception(unsigned char *string,float number,int div);
 void mpu_calibrate(int *OFFSET_X,int *OFFSET_Y,int *OFFSET_Z);
 float mabs(float numb) ;
+void fuse_data(int OFF_X,int OFF_Y,int OFF_Z);
 
 
 float g_x;
@@ -215,7 +216,7 @@ int counter=0;
 int fused_x=0;
 int fused_y=0;
 int fused_z=0;
-
+int fused_2;
 
 
 
@@ -301,11 +302,13 @@ while (1)
 
         if(counter_temp>1)
         {
-            my_put_int(degree_x_z);
+            my_put_int(degree_x);
             my_putstr("\t");
-            my_put_int(deg_accel_x_z);
+            my_put_int(deg_accel_x_2);
             my_putstr("\t");
             my_put_int(fused_x);
+            my_putstr("\t");
+            my_put_int(fused_2);
             my_putstr("\t");
 //            my_put_int(degree_y);
 //            my_putstr("\t");
@@ -327,7 +330,7 @@ while (1)
             counter_temp++;
 
          //accel_cal_2()    ;
-        accel_cal(OFF_X,OFF_Y,OFF_Z);
+        fuse_data(OFF_X,OFF_Y,OFF_Z);
 
 
     }
@@ -463,6 +466,106 @@ void accel_cal(int OFF_X,int OFF_Y,int OFF_Z)
     fused_x=(degree_x_z)*.3+deg_accel_x_z*.1+fused_x*.6;
     fused_y=fused_y*.3+(degree_y_z)*.3+deg_accel_y_z*.4;
     fused_z=fused_z*.3+(degree_z_z)*.3+deg_accel_z_z*.4;
+
+
+
+}
+void fuse_data(int OFF_X,int OFF_Y,int OFF_Z)
+{
+
+    int t_x,t_y,t_z;
+    int zero=180;
+    int p_x,p_y,p_z;
+    t_x=g_x;
+    t_y=g_y;
+    t_z=g_z;
+
+    p_x=a_x;
+    p_y=a_y;
+    p_z=a_z;
+
+    g_x=(float)mpu6050_get_gyro_x()-OFF_X;
+    g_y=(float)mpu6050_get_gyro_y()-OFF_Y;
+    g_z=(float)mpu6050_get_gyro_z()-OFF_Z;
+
+    a_x=mpu6050_get_accel_x();
+    a_y=mpu6050_get_accel_y();
+    a_z=mpu6050_get_accel_z();
+
+    g_x=(int)g_x/GRYRO_SCALE;
+    g_y=(int)g_y/GRYRO_SCALE;
+    g_z=(int)g_z/GRYRO_SCALE;
+
+    g_x=t_x*.2+g_x*.8;
+    g_y=t_y*.2+g_y*.8;
+    g_z=t_z*.2+g_z*.8;
+
+    a_x/=100;
+    a_y/=100;//because of avr variable size i destroyed my precision
+    a_z/=100;
+
+    a_x=a_x*.4+p_x*.6;
+    a_y=a_y*.4+p_y*.6;
+    a_z=a_z*.4+p_z*.6;
+
+    deg_accel_z_2= atan2(a_y,a_x)*180/M_PI; //xy plane
+    deg_accel_x_2= atan2(a_y,a_z)*180/M_PI;//yz plane
+    deg_accel_y_2= atan2(a_x,a_z)*180/M_PI;//zx plane
+
+    deg_accel_x_2=(deg_accel_x_2>0)?deg_accel_x_2:360+deg_accel_x_2;
+    deg_accel_y_2=(deg_accel_y_2>0)?deg_accel_y_2:360+deg_accel_y_2;
+    deg_accel_z_2=(deg_accel_z_2>0)?deg_accel_z_2:360+deg_accel_z_2;
+    deg_accel_y_2=360-deg_accel_y_2;
+
+    //deg_accel_z_2=360-deg_accel_z_2;
+
+
+    dis_int();
+
+
+    fused_x=(((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME)*0+fused_x)*.9+deg_accel_x_2*.1;
+    fused_2=(((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME)+fused_2)*.9+deg_accel_x_2*.1;
+    //fused_y=fused_y*.3+(degree_y_z)*.3+deg_accel_y_z*.4;
+    //fused_z=fused_z*.3+(degree_z_z)*.3+deg_accel_z_z*.4;
+
+
+    degree_x+=((float)g_x*(float)(counter*256+(TCNT0))*(float)TIME);//0.000000977022=;
+    degree_y+=((float)g_y*(float)(counter*256+(TCNT0))*(float)TIME);//0.000000977022=TIME/GRYRO_SCALE;
+    degree_z+=((float)g_z*(float)(counter*256+(TCNT0))*(float)TIME);//0.000000977022=TIME/GRYRO_SCALE;
+
+    counter=0;
+    ena_int();
+    while(fused_x>360)
+    {
+        if(fused_x>360)
+            fused_x=fused_x-360;
+    }
+    while(fused_x<0)
+    {
+        if(fused_x<0)
+            fused_x=360+fused_x;
+    }
+
+    while((degree_x>360)||(degree_y>360)||(degree_z>360))
+    {
+        if(degree_x>360)
+            degree_x=degree_x-360;
+        if(degree_y>360)
+            degree_y=degree_y-360;
+        if(degree_z>360)
+            degree_z=degree_z-360;
+        //exception("upper",6,0);
+    }
+    while((degree_x<0)||(degree_z<0)||(degree_y<0))
+    {
+        if(degree_x<0)
+            degree_x=360+degree_x;
+        if(degree_y<0)
+            degree_y=360+degree_y;
+        if(degree_z<0)
+            degree_z=360+degree_z;
+        //exception("leve",5,0);
+    }
 
 
 
