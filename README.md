@@ -45,8 +45,7 @@ It outputs real-time orientation (angles) over **USART** at 9600 baud.
 - Optional: PC with terminal software (PuTTY, RealTerm, Arduino Serial Monitor).
 
 ### Software
-- **CodeVisionAVR** or **AVR-GCC (WinAVR / avr-gcc)**.
-- Flash programmer (USBasp, AVRISP, Atmel ICE, etc.).
+- **CodeVisionAVR**
 
 ---
 
