@@ -86,14 +86,6 @@ It outputs real-time orientation (angles) over **USART** at 9600 baud.
    - `VCC` → 5V (or 3.3V depending on module)
    - `GND` → GND
 
-2. **Flash the firmware**  
-   Using `avr-gcc` + `avrdude`:
-   ```bash
-   avr-gcc -mmcu=atmega32 -Os -o imu.elf mpu6050_project.c
-   avr-objcopy -O ihex imu.elf imu.hex
-   avrdude -c usbasp -p m32 -U flash:w:imu.hex
-
-
 
 
 
